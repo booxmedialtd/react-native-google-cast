@@ -100,6 +100,28 @@ RCT_REMAP_METHOD(getCastState,
   });
 }
 
+RCT_REMAP_METHOD(restoreCastSession,
+                 restoreCastSessionWithResolver: (RCTPromiseResolveBlock) resolve
+                 rejecter: (RCTPromiseRejectBlock) reject) {
+  dispatch_async(dispatch_get_main_queue(), ^{
+    GCKCastState state = [GCKCastContext.sharedInstance castState];
+    if (self->castSession == nil && state == GCKCastStateConnected) {
+      GCKCastSession* cs = GCKCastContext.sharedInstance.sessionManager.currentCastSession;
+      castSession = cs;
+      [cs.remoteMediaClient addListener:self];
+      /*
+       * After restored, the playing media progress on sender side is still not updated due to the
+       * inactivation of MEDIA_PROGRESS_UPDATED event.
+       * Thus, we have to request the updatest status from receiver, which can also activate the
+       * event.
+       */
+      [cs.remoteMediaClient requestStatus];
+      [self sendEventWithName:SESSION_STARTED body:@{}];
+    }
+    resolve(@(state));
+  });
+}
+
 RCT_EXPORT_METHOD(launchExpandedControls) {
   dispatch_async(dispatch_get_main_queue(), ^{
     [GCKCastContext.sharedInstance presentDefaultExpandedMediaControls];
@@ -148,12 +170,12 @@ RCT_EXPORT_METHOD(sendMessage: (NSString *)message
                   resolver: (RCTPromiseResolveBlock) resolve
                   rejecter: (RCTPromiseRejectBlock) reject) {
   GCKCastChannel *channel = channels[namespace];
-  
+
   if (!channel) {
     NSError *error = [NSError errorWithDomain:NSCocoaErrorDomain code:GCKErrorCodeChannelNotConnected userInfo:nil];
     return reject(@"no_channel", [NSString stringWithFormat:@"Channel for namespace %@ does not exist. Did you forget to call initChannel?", namespace], error);
   }
-  
+
   NSError *error;
   [channel sendTextMessage:message error:&error];
   if (error != nil) {
@@ -310,10 +332,10 @@ RCT_EXPORT_METHOD(seek : (int)playPosition) {
     playbackStarted = false;
     playbackEnded = false;
   }
-  
+
   double position = mediaStatus.streamPosition;
   double duration = mediaStatus.mediaInformation.streamDuration;
-  
+
   NSDictionary *status = @{
     @"playerState": @(mediaStatus.playerState),
     @"idleReason": @(mediaStatus.idleReason),
@@ -338,7 +360,7 @@ RCT_EXPORT_METHOD(seek : (int)playPosition) {
     [progressTimer invalidate];
     progressTimer = nil;
   }
-  
+
   if (!playbackStarted && mediaStatus.playerState == GCKMediaPlayerStatePlaying) {
     [self sendEventWithName:MEDIA_PLAYBACK_STARTED body:@{@"mediaStatus":status}];
     playbackStarted = true;

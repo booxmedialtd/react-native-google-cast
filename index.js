@@ -37,6 +37,14 @@ export default {
         ],
     )
   },
+  restoreCastSession(): Promise<CastState> {
+    return GoogleCast.restoreCastSession().then(
+      state =>
+        ['NoDevicesAvailable', 'NotConnected', 'Connecting', 'Connected'][
+          state
+        ]
+    )
+  },
   castMedia(params: {
     mediaUrl: string,
     title?: string,
