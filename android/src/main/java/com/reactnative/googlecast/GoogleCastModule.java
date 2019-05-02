@@ -64,6 +64,7 @@ public class GoogleCastModule
 
     private CastSession mCastSession;
     private SessionManagerListener<CastSession> mSessionManagerListener;
+    private GoogleCastRemoteMediaClientListener mRemoteMediaClientListener;
 
     public GoogleCastModule(ReactApplicationContext reactContext) {
         super(reactContext);
@@ -219,6 +220,25 @@ public class GoogleCastModule
         });
     }
 
+    @ReactMethod
+    public void restoreCastSession(final Promise promise) {
+        getReactApplicationContext().runOnUiQueueThread(new Runnable() {
+            @Override
+            public void run() {
+                CastContext castContext =
+                    CastContext.getSharedInstance(getReactApplicationContext());
+                CastSession castSession = castContext.getSessionManager().getCurrentCastSession();
+                Integer state = castContext.getCastState() - 1;
+                if (mCastSession == null && castSession != null && state == 3) {
+                  setCastSession(castSession);
+                  setupRemoteMediaListener();
+                  castSession.getRemoteMediaClient().addListener(mRemoteMediaClientListener);
+                  castSession.getRemoteMediaClient().addProgressListener(mRemoteMediaClientListener, 1000);
+                }
+                promise.resolve(state);
+            }
+        });
+    }
 
     @ReactMethod
     public void initChannel(final String namespace, final Promise promise) {
@@ -347,6 +367,10 @@ public class GoogleCastModule
 
     private void setupCastListener() {
         mSessionManagerListener = new GoogleCastSessionManagerListener(this);
+    }
+
+    private void setupRemoteMediaListener() {
+        mRemoteMediaClientListener = new GoogleCastRemoteMediaClientListener(this);
     }
 
     @Override
