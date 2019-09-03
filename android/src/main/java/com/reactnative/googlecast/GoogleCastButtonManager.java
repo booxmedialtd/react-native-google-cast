@@ -38,6 +38,7 @@ public class GoogleCastButtonManager
     castContext.addCastStateListener(new CastStateListener() {
       @Override
       public void onCastStateChanged(int newState) {
+        System.out.print("!!!!! on cast state changed: " + newState);
         GoogleCastButtonManager.this.updateButtonState(button, newState);
       }
     });
