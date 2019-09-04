@@ -33,16 +33,6 @@ public class GoogleCastButtonManager
     final MediaRouteButton button = new ColorableMediaRouteButton(context);
     CastButtonFactory.setUpMediaRouteButton(context, button);
 
-    updateButtonState(button, castContext.getCastState());
-
-    castContext.addCastStateListener(new CastStateListener() {
-      @Override
-      public void onCastStateChanged(int newState) {
-        System.out.print("!!!!! on cast state changed: " + newState);
-        GoogleCastButtonManager.this.updateButtonState(button, newState);
-      }
-    });
-
     return button;
   }
 
@@ -52,16 +42,6 @@ public class GoogleCastButtonManager
       return;
     button.applyTint(color);
     mColor = color;
-  }
-
-  private void updateButtonState(MediaRouteButton button, int state) {
-    // hide the button when no device available (default behavior is show it
-    // disabled)
-    if (CastState.NO_DEVICES_AVAILABLE == state) {
-      button.setVisibility(View.GONE);
-    } else {
-      button.setVisibility(View.VISIBLE);
-    }
   }
 
   // https://stackoverflow.com/a/41496796/384349
