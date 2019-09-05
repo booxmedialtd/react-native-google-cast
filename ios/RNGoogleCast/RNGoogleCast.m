@@ -43,7 +43,9 @@ RCT_EXPORT_MODULE();
 
     @"CHANNEL_CONNECTED" : CHANNEL_CONNECTED,
     @"CHANNEL_MESSAGE_RECEIVED" : CHANNEL_MESSAGE_RECEIVED,
-    @"CHANNEL_DISCONNECTED" : CHANNEL_DISCONNECTED
+    @"CHANNEL_DISCONNECTED" : CHANNEL_DISCONNECTED,
+
+    @"CAST_DEVICE_AVAILABILITY": CAST_DEVICE_AVAILABILITY
   };
 }
 
@@ -54,7 +56,9 @@ RCT_EXPORT_MODULE();
 
     MEDIA_STATUS_UPDATED, MEDIA_PLAYBACK_STARTED, MEDIA_PLAYBACK_ENDED, MEDIA_PROGRESS_UPDATED,
 
-    CHANNEL_CONNECTED, CHANNEL_MESSAGE_RECEIVED, CHANNEL_DISCONNECTED
+    CHANNEL_CONNECTED, CHANNEL_MESSAGE_RECEIVED, CHANNEL_DISCONNECTED,
+
+    CAST_DEVICE_AVAILABILITY
   ];
 }
 
@@ -65,6 +69,17 @@ RCT_EXPORT_MODULE();
   dispatch_async(dispatch_get_main_queue(), ^{
     [GCKCastContext.sharedInstance.sessionManager addListener:self];
   });
+
+  // Add the Observer for cast state
+  [[NSNotificationCenter defaultCenter] addObserver:self
+    selector:@selector(castDeviceDidChange:)
+    name:kGCKCastStateDidChangeNotification
+    object:[GCKCastContext sharedInstance]];
+}
+
+- (void)castDeviceDidChange:(NSNotification *)notification {
+    BOOL isAvailable = [GCKCastContext sharedInstance].castState != GCKCastStateNoDevicesAvailable;
+    [self sendEventWithName:CAST_DEVICE_AVAILABILITY body:@{@"isAvailable": @(isAvailable)}];
 }
 
 // Will be called when this module's last listener is removed, or on dealloc.
