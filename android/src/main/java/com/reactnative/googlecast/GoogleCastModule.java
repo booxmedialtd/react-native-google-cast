@@ -22,6 +22,7 @@ import com.google.android.gms.cast.MediaInfo;
 import com.google.android.gms.cast.MediaMetadata;
 import com.google.android.gms.cast.framework.CastContext;
 import com.google.android.gms.cast.framework.CastSession;
+import com.google.android.gms.cast.framework.CastStateListener;
 import com.google.android.gms.cast.framework.SessionManager;
 import com.google.android.gms.cast.framework.SessionManagerListener;
 import com.google.android.gms.cast.framework.media.RemoteMediaClient;
@@ -62,14 +63,20 @@ public class GoogleCastModule
 
     protected static final  String CHANNEL_MESSAGE_RECEIVED = "GoogleCast:ChannelMessageReceived";
 
+    protected static final String CAST_DEVICE_AVAILABILITY = "GoogleCast:CastDeviceAvailability";
+
+    private ReactApplicationContext mReactContext;
     private CastSession mCastSession;
     private SessionManagerListener<CastSession> mSessionManagerListener;
     private GoogleCastRemoteMediaClientListener mRemoteMediaClientListener;
+    private CastStateListener mCastStateListener;
 
     public GoogleCastModule(ReactApplicationContext reactContext) {
         super(reactContext);
+        mReactContext = reactContext;
         reactContext.addLifecycleEventListener(this);
         setupCastListener();
+        setupCastStateListener();
     }
 
     @Override
@@ -96,6 +103,8 @@ public class GoogleCastModule
         constants.put("MEDIA_PROGRESS_UPDATED", MEDIA_PROGRESS_UPDATED);
 
         constants.put("CHANNEL_MESSAGE_RECEIVED", CHANNEL_MESSAGE_RECEIVED);
+
+        constants.put("CAST_DEVICE_AVAILABILITY", CAST_DEVICE_AVAILABILITY);
         return constants;
     }
 
@@ -373,6 +382,19 @@ public class GoogleCastModule
         mRemoteMediaClientListener = new GoogleCastRemoteMediaClientListener(this);
     }
 
+    private void setupCastStateListener() {
+        mCastStateListener = new CastStateListener() {
+            @Override
+            public void onCastStateChanged(int newState) {
+                // When there is available device, isAvailable = true
+                boolean isAvailable = newState != 1;
+                WritableMap map = Arguments.createMap();
+                map.putBoolean("isAvailable", isAvailable);
+                emitMessageToRN(CAST_DEVICE_AVAILABILITY, map);
+            }
+        };
+    }
+
     @Override
     public void onHostResume() {
         getReactApplicationContext().runOnUiQueueThread(new Runnable() {
@@ -383,6 +405,9 @@ public class GoogleCastModule
                                 .getSessionManager();
                 sessionManager.addSessionManagerListener(mSessionManagerListener,
                         CastSession.class);
+
+                CastContext castContext = CastContext.getSharedInstance(mReactContext);
+                castContext.addCastStateListener(mCastStateListener);
             }
         });
     }
@@ -397,6 +422,9 @@ public class GoogleCastModule
                                 .getSessionManager();
                 sessionManager.removeSessionManagerListener(mSessionManagerListener,
                         CastSession.class);
+                CastContext castContext = CastContext.getSharedInstance(mReactContext);
+                castContext.removeCastStateListener(mCastStateListener);
+
             }
         });
     }
