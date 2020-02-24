@@ -1,10 +1,18 @@
 package com.reactnative.googlecast;
 
+import android.util.Log;
+
+import com.facebook.react.common.annotations.VisibleForTesting;
 import com.google.android.gms.cast.framework.CastSession;
 import com.google.android.gms.cast.framework.SessionManagerListener;
+import com.google.android.gms.cast.framework.media.RemoteMediaClient;
 
 public class GoogleCastSessionManagerListener
     implements SessionManagerListener<CastSession> {
+
+  @VisibleForTesting
+  public static final String REACT_CLASS = "RNGoogleCast";
+
   private GoogleCastModule module;
   private GoogleCastRemoteMediaClientListener remoteMediaClientListener;
 
@@ -69,9 +77,14 @@ public class GoogleCastSessionManagerListener
       public void run() {
         remoteMediaClientListener =
             new GoogleCastRemoteMediaClientListener(module);
-        castSession.getRemoteMediaClient().addListener(
-            remoteMediaClientListener);
-        castSession.getRemoteMediaClient().addProgressListener(remoteMediaClientListener, 1000);
+        RemoteMediaClient remoteMediaClient = castSession.getRemoteMediaClient();
+        if (remoteMediaClient == null) {
+          Log.w(REACT_CLASS, "No remote media client");
+          return;
+        }
+
+        remoteMediaClient.addListener(remoteMediaClientListener);
+        remoteMediaClient.addProgressListener(remoteMediaClientListener, 1000);
       }
     });
   }

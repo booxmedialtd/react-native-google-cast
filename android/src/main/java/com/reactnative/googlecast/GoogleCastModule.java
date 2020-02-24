@@ -127,6 +127,7 @@ public class GoogleCastModule
                 RemoteMediaClient remoteMediaClient =
                         mCastSession.getRemoteMediaClient();
                 if (remoteMediaClient == null) {
+                    Log.w(REACT_CLASS, "No remote media client");
                     return;
                 }
 
@@ -202,7 +203,7 @@ public class GoogleCastModule
         getReactApplicationContext().runOnUiQueueThread(new Runnable() {
             @Override
             public void run() {
-              if (mCastSession == null) {
+              if (mCastSession == null || mCastSession.getCastDevice() == null) {
                 promise.resolve(null);
                 return;
               }
@@ -241,8 +242,14 @@ public class GoogleCastModule
                 if (mCastSession == null && castSession != null && state == 3) {
                   setCastSession(castSession);
                   setupRemoteMediaListener();
-                  castSession.getRemoteMediaClient().addListener(mRemoteMediaClientListener);
-                  castSession.getRemoteMediaClient().addProgressListener(mRemoteMediaClientListener, 1000);
+
+                  RemoteMediaClient remoteMediaClient = castSession.getRemoteMediaClient();
+                  if (remoteMediaClient != null) {
+                    remoteMediaClient.addListener(mRemoteMediaClientListener);
+                    remoteMediaClient.addProgressListener(mRemoteMediaClientListener, 1000);
+                  } else {
+                    Log.w(REACT_CLASS, "No remote media client got when restoring cast session");
+                  }
                 }
                 promise.resolve(state);
             }
@@ -309,7 +316,13 @@ public class GoogleCastModule
             getReactApplicationContext().runOnUiQueueThread(new Runnable() {
                 @Override
                 public void run() {
-                    mCastSession.getRemoteMediaClient().play();
+                  RemoteMediaClient remoteMediaClient = mCastSession.getRemoteMediaClient();
+                  if (remoteMediaClient == null) {
+                    Log.w(REACT_CLASS, "No remote media client");
+                    return;
+                  }
+
+                  remoteMediaClient.play();
                 }
             });
         }
@@ -321,7 +334,13 @@ public class GoogleCastModule
             getReactApplicationContext().runOnUiQueueThread(new Runnable() {
                 @Override
                 public void run() {
-                    mCastSession.getRemoteMediaClient().pause();
+                  RemoteMediaClient remoteMediaClient = mCastSession.getRemoteMediaClient();
+                  if (remoteMediaClient == null) {
+                    Log.w(REACT_CLASS, "No remote media client");
+                    return;
+                  }
+
+                  remoteMediaClient.pause();
                 }
             });
         }
@@ -333,7 +352,13 @@ public class GoogleCastModule
             getReactApplicationContext().runOnUiQueueThread(new Runnable() {
                 @Override
                 public void run() {
-                    mCastSession.getRemoteMediaClient().stop();
+                  RemoteMediaClient remoteMediaClient = mCastSession.getRemoteMediaClient();
+                  if (remoteMediaClient == null) {
+                    Log.w(REACT_CLASS, "No remote media client");
+                    return;
+                  }
+
+                  remoteMediaClient.stop();
                 }
             });
         }
@@ -345,7 +370,13 @@ public class GoogleCastModule
             getReactApplicationContext().runOnUiQueueThread(new Runnable() {
                 @Override
                 public void run() {
-                    mCastSession.getRemoteMediaClient().seek(position * 1000);
+                  RemoteMediaClient remoteMediaClient = mCastSession.getRemoteMediaClient();
+                  if (remoteMediaClient == null) {
+                    Log.w(REACT_CLASS, "No remote media client");
+                    return;
+                  }
+
+                  remoteMediaClient.seek(position * 1000);
                 }
             });
         }

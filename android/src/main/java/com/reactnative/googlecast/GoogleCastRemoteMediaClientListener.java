@@ -1,14 +1,21 @@
 package com.reactnative.googlecast;
 
 import android.support.annotation.NonNull;
+import android.util.Log;
 
+import com.facebook.react.common.annotations.VisibleForTesting;
 import com.facebook.react.bridge.Arguments;
 import com.facebook.react.bridge.WritableMap;
 import com.google.android.gms.cast.MediaStatus;
+import com.google.android.gms.cast.framework.CastSession;
 import com.google.android.gms.cast.framework.media.RemoteMediaClient;
 
 public class GoogleCastRemoteMediaClientListener
     implements RemoteMediaClient.Listener, RemoteMediaClient.ProgressListener {
+
+  @VisibleForTesting
+  public static final String REACT_CLASS = "RNGoogleCast";
+
   private GoogleCastModule module;
   private boolean playbackStarted;
   private boolean playbackEnded;
@@ -23,9 +30,16 @@ public class GoogleCastRemoteMediaClientListener
     module.runOnUiQueueThread(new Runnable() {
       @Override
       public void run() {
-        MediaStatus mediaStatus =
-            module.getCastSession().getRemoteMediaClient().getMediaStatus();
+        CastSession castSession = module.getCastSession();
+        if (castSession == null) {
+          return;
+        }
+        if (castSession.getRemoteMediaClient() == null) {
+          Log.w(REACT_CLASS, "No remote media client");
+          return;
+        }
 
+        MediaStatus mediaStatus = castSession.getRemoteMediaClient().getMediaStatus();
         if (mediaStatus == null) {
           return;
         }
@@ -94,9 +108,16 @@ public class GoogleCastRemoteMediaClientListener
     module.runOnUiQueueThread(new Runnable() {
       @Override
       public void run() {
-        MediaStatus mediaStatus =
-            module.getCastSession().getRemoteMediaClient().getMediaStatus();
+        CastSession castSession = module.getCastSession();
+        if (castSession == null) {
+          return;
+        }
+        if (castSession.getRemoteMediaClient() == null) {
+          Log.w(REACT_CLASS, "No remote media client");
+          return;
+        }
 
+        MediaStatus mediaStatus = castSession.getRemoteMediaClient().getMediaStatus();
         if (mediaStatus == null) {
           return;
         }
