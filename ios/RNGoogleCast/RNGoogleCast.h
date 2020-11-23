@@ -22,6 +22,8 @@ static NSString *const CHANNEL_DISCONNECTED = @"GoogleCast:ChannelDisconnected";
 
 static NSString *const CAST_DEVICE_AVAILABILITY = @"GoogleCast:CastDeviceAvailability";
 
+static NSString *const DEFAULT_SUBTITLES_LANGUAGE = @"en";
+
 @interface RNGoogleCast
     : RCTEventEmitter <RCTBridgeModule, GCKCastDeviceStatusListener,
                        GCKSessionManagerListener, GCKRemoteMediaClientListener,

@@ -1,11 +1,11 @@
 package com.reactnative.googlecast;
 
 import android.support.annotation.NonNull;
-import android.util.Log;
 
 import com.facebook.react.common.annotations.VisibleForTesting;
 import com.facebook.react.bridge.Arguments;
 import com.facebook.react.bridge.WritableMap;
+import com.google.android.gms.cast.MediaInfo;
 import com.google.android.gms.cast.MediaStatus;
 import com.google.android.gms.cast.framework.CastSession;
 import com.google.android.gms.cast.framework.media.RemoteMediaClient;
@@ -30,16 +30,7 @@ public class GoogleCastRemoteMediaClientListener
     module.runOnUiQueueThread(new Runnable() {
       @Override
       public void run() {
-        CastSession castSession = module.getCastSession();
-        if (castSession == null) {
-          return;
-        }
-        if (castSession.getRemoteMediaClient() == null) {
-          Log.w(REACT_CLASS, "No remote media client");
-          return;
-        }
-
-        MediaStatus mediaStatus = castSession.getRemoteMediaClient().getMediaStatus();
+        MediaStatus mediaStatus = module.getMediaStatus();
         if (mediaStatus == null) {
           return;
         }
@@ -80,8 +71,11 @@ public class GoogleCastRemoteMediaClientListener
     map.putInt("idleReason", mediaStatus.getIdleReason());
     map.putBoolean("muted", mediaStatus.isMute());
     map.putInt("streamPosition", (int)(mediaStatus.getStreamPosition() / 1000));
-    map.putInt("streamDuration",
-               (int)(mediaStatus.getMediaInfo().getStreamDuration() / 1000));
+
+    MediaInfo info = mediaStatus.getMediaInfo();
+    if (info != null) {
+      map.putInt("streamDuration", (int) (info.getStreamDuration() / 1000));
+    }
 
     WritableMap message = Arguments.createMap();
     message.putMap("mediaStatus", map);
@@ -108,16 +102,7 @@ public class GoogleCastRemoteMediaClientListener
     module.runOnUiQueueThread(new Runnable() {
       @Override
       public void run() {
-        CastSession castSession = module.getCastSession();
-        if (castSession == null) {
-          return;
-        }
-        if (castSession.getRemoteMediaClient() == null) {
-          Log.w(REACT_CLASS, "No remote media client");
-          return;
-        }
-
-        MediaStatus mediaStatus = castSession.getRemoteMediaClient().getMediaStatus();
+        MediaStatus mediaStatus = module.getMediaStatus();
         if (mediaStatus == null) {
           return;
         }
